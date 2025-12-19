@@ -10,17 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@supabase/supabase-js": "^2.27.0",
     "@chakra-ui/react": "^2.7.0",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
+    "@supabase/supabase-js": "^2.27.0",
     "framer-motion": "^10.12.16",
-    "react-router-dom": "^6.18.0",
-    "react-hook-form": "^7.46.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.46.1",
+    "react-router-dom": "^6.18.0"
   },
-  "optionalDependencies": {},
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/react": "^19.2.5",
