@@ -1,4 +1,8 @@
+import axios from "axios";
 import { supabase } from "../config/supabaseClient";
+
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
 export const getUsers = async () => {
   const { data, error } = await supabase
@@ -68,12 +72,36 @@ export const updateUser = async (id, updates) => {
 };
 
 export const deleteUser = async (id) => {
-  const { data, error } = await supabase
-    .from("users")
-    .delete()
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  // const { data, error } = await supabase
+  //   .from("users")
+  //   .delete()
+  //   .eq("id", id)
+  //   .select()
+  //   .single();
+  // if (error) throw error;
+  // return data;
+
+  try {
+    console.log("coming hereere");
+
+    const data = await axios.post(
+      `${supabaseUrl}/functions/v1/smooth-function`,
+      {
+        user_id: id
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`
+        }
+      }
+    );
+
+    console.log("data", data);
+
+    return data;
+  } catch (error) {
+    console.error("Error sending invitation SMS:", error);
+    throw error;
+  }
 };

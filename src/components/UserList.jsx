@@ -2,12 +2,16 @@ import React from "react";
 import { Table, Thead, Tbody, Tr, Th, Td, Button, Box } from "@chakra-ui/react";
 import { deleteUser } from "../utils/userService";
 
-export default function UserList({ users = [], onEdit, onDelete }) {
+export default function UserList({ users = [], onEdit, onDelete, currentUserId, onSelfDelete }) {
   const handleDelete = async (id) => {
     if (!confirm("Delete this user?")) return;
     try {
       await deleteUser(id);
       onDelete && onDelete();
+      // If the deleted user is the currently signed-in user, trigger sign-out
+      if (id === currentUserId) {
+        onSelfDelete && onSelfDelete();
+      }
     } catch (e) {
       console.error(e);
     }

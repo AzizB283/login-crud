@@ -12,11 +12,11 @@ import {
   useColorModeValue,
   Text,
 } from "@chakra-ui/react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { createUser, updateUser } from "../utils/userService";
 
 export default function UserForm({ editing, onSaved, onCancel }) {
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm();
   const [submitting, setSubmitting] = useState(false);
   const toast = useToast();
 
@@ -29,6 +29,8 @@ export default function UserForm({ editing, onSaved, onCancel }) {
       setValue("role", editing.role || "user");
     } else {
       reset({ name: "", email: "", age: "", number: "", role: "user", password: "" });
+      // Ensure NumberInput's internal value is cleared as well
+      setValue("age", "");
     }
   }, [editing, reset, setValue]);
 
@@ -42,7 +44,9 @@ export default function UserForm({ editing, onSaved, onCancel }) {
         await createUser(values);
         toast({ status: "success", title: "User added" });
       }
-      reset();
+      // Reset form fields explicitly so number inputs clear reliably
+      reset({ name: "", email: "", age: "", number: "", role: "user", password: "" });
+      setValue("age", "");
       onSaved && onSaved();
     } catch (e) {
       console.error(e);
@@ -93,20 +97,26 @@ export default function UserForm({ editing, onSaved, onCancel }) {
 
           <FormControl>
             <FormLabel>Age</FormLabel>
-            <NumberInput min={0}>
-              <NumberInputField
-                {...register("age", {
-                  validate: (v) => {
-                    if (v === undefined || v === null || v === "") return true;
-                    const n = Number(v);
-                    if (Number.isNaN(n)) return "Age must be a number";
-                    if (n < 0) return "Age cannot be less than 0";
-                    if (n > 110) return "Age cannot be greater than 110";
-                    return true;
-                  },
-                })}
-              />
-            </NumberInput>
+            <Controller
+              name="age"
+              control={control}
+              defaultValue={""}
+              rules={{
+                validate: (v) => {
+                  if (v === undefined || v === null || v === "") return true;
+                  const n = Number(v);
+                  if (Number.isNaN(n)) return "Age must be a number";
+                  if (n < 0) return "Age cannot be less than 0";
+                  if (n > 110) return "Age cannot be greater than 110";
+                  return true;
+                },
+              }}
+              render={({ field }) => (
+                <NumberInput min={0} value={field.value ?? ""} onChange={(val) => field.onChange(val)}>
+                  <NumberInputField placeholder="Age" />
+                </NumberInput>
+              )}
+            />
             {errors.age && <Text color="red.300" fontSize="sm">{errors.age.message}</Text>}
           </FormControl>
 

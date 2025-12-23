@@ -77,7 +77,13 @@ export default function Home({ session, onSignOut }) {
           <Text fontSize="sm" color="gray.500">Use the form above to add the first user.</Text>
         </Box>
       ) : (
-        <UserList users={users} onEdit={(u) => setEditingUser(u)} onDelete={() => loadUsers()} />
+        <UserList
+          users={users}
+          onEdit={(u) => setEditingUser(u)}
+          onDelete={() => loadUsers()}
+          currentUserId={session?.user?.id}
+          onSelfDelete={onSignOut}
+        />
       )}
       </Container>
     </Box>
