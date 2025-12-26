@@ -61,29 +61,55 @@ export const createUser = async (user) => {
 };
 
 export const updateUser = async (id, updates) => {
-  const { data, error } = await supabase
-    .from("users")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  try {
+    // Fetch current user email to determine if it changed
+    const { data: current, error: getErr } = await supabase
+      .from("users")
+      .select("email")
+      .eq("id", id)
+      .single();
+    if (getErr) throw getErr;
+
+    const emailChanged = updates.email && updates.email !== current?.email;
+
+    const { data, error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+
+    // Only call the edge function when the email actually changed
+    if (emailChanged) {
+      try {
+        await axios.post(
+          `${supabaseUrl}/functions/v1/update-user`,
+          {
+            user_id: id,
+            new_email: updates.email
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseKey}`
+            }
+          }
+        );
+      } catch (err) {
+        console.error("Error calling update-user function:", err);
+        throw err;
+      }
+    }
+
+    return data;
+  } catch (err) {
+    throw err;
+  }
 };
 
 export const deleteUser = async (id) => {
-  // const { data, error } = await supabase
-  //   .from("users")
-  //   .delete()
-  //   .eq("id", id)
-  //   .select()
-  //   .single();
-  // if (error) throw error;
-  // return data;
-
   try {
-    console.log("coming hereere");
-
     const data = await axios.post(
       `${supabaseUrl}/functions/v1/smooth-function`,
       {

@@ -16,32 +16,45 @@ import { useForm, Controller } from "react-hook-form";
 import { createUser, updateUser } from "../utils/userService";
 
 export default function UserForm({ editing, onSaved, onCancel }) {
-  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm({
+    defaultValues: { name: "", email: "", age: "", number: "", role: "user", password: "" },
+    // validate on each change so edit form shows errors as user types
+    mode: "onChange",
+    reValidateMode: "onChange",
+  });
   const [submitting, setSubmitting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     if (editing) {
-      setValue("name", editing.name || "");
-      setValue("email", editing.email || "");
-      setValue("age", editing.age || "");
-      setValue("number", editing.number || "");
-      setValue("role", editing.role || "user");
+      // Reset form state to the editing user's values so validations and dirty state work correctly
+      reset({
+        name: editing.name ?? "",
+        email: editing.email ?? "",
+        age: editing.age ?? "",
+        number: editing.number ?? "",
+        role: editing.role ?? "user",
+        password: "",
+      });
     } else {
       reset({ name: "", email: "", age: "", number: "", role: "user", password: "" });
-      // Ensure NumberInput's internal value is cleared as well
-      setValue("age", "");
     }
-  }, [editing, reset, setValue]);
+  }, [editing, reset]);
 
   const onSubmit = async (values) => {
     setSubmitting(true);
     try {
+      // Prepare payload: don't send empty password or fields not intended for update
+      const payload = { ...values };
+      if (!payload.password) delete payload.password;
+
       if (editing) {
-        await updateUser(editing.id, values);
+        // Never send password on update from this form
+        delete payload.password;
+        await updateUser(editing.id, payload);
         toast({ status: "success", title: "User updated" });
       } else {
-        await createUser(values);
+        await createUser(payload);
         toast({ status: "success", title: "User added" });
       }
       // Reset form fields explicitly so number inputs clear reliably
@@ -106,7 +119,8 @@ export default function UserForm({ editing, onSaved, onCancel }) {
                   if (v === undefined || v === null || v === "") return true;
                   const n = Number(v);
                   if (Number.isNaN(n)) return "Age must be a number";
-                  if (n < 0) return "Age cannot be less than 0";
+                  // Disallow zero as an age — must be a positive number
+                  if (n <= 0) return "Age must be greater than 0";
                   if (n > 110) return "Age cannot be greater than 110";
                   return true;
                 },
